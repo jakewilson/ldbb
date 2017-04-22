@@ -16,6 +16,7 @@ module.exports = {
     get: function(artist, callback) {
         artist = artist.toLowerCase().trim();
         artist = artist.replace(/\s+/g, ' ');
+        frequency_table = {};
 
         getArtistId(artist, (id) => {
             console.log(`ID: ${id}`);
@@ -24,6 +25,7 @@ module.exports = {
                     getSongLyrics(url, analyzeLyrics, callback);
                 }, (err) => {
                     if (!err) {
+                        sortTable();
                         callback(frequency_table);
                     } else {
                         console.log(`ERROR: ${err}`);
@@ -33,6 +35,19 @@ module.exports = {
         });
     }
 };
+
+function sortTable() {
+    var table = [];
+
+    for (var word in frequency_table)
+        table.push([word, frequency_table[word]]);
+
+    table.sort((a, b) => {
+        return b[1] - a[1];
+    });
+
+    frequency_table = table;
+}
 
 /**
  * Iterates through every word in the song,
