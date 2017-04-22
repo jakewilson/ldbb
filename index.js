@@ -9,9 +9,13 @@ app.use(express.static('public'));
 app.get('/artist/*', (req, res) => {
     let artist = req.params[0];
 
-    lyrics.get(artist, (data) => {
-        console.log(data);
-        res.json(data);
+    lyrics.get(artist, (err, data) => {
+        if (err) {
+            res.sendStatus(500);
+        } else {
+            console.log(data);
+            res.json(data);
+        }
     });
 });
 

@@ -26,9 +26,10 @@ module.exports = {
                 }, (err) => {
                     if (!err) {
                         sortTable();
-                        callback(frequency_table);
+                        callback(null, frequency_table);
                     } else {
-                        console.log(`ERROR: ${err}`);
+                        console.log(`NOT GOING TO COMPLETE: ${err}`);
+                        callback(err);
                     }
                 });
             });
@@ -87,7 +88,7 @@ function processLyrics(lyrics) {
  */
 function getSongLyrics(url, callback, done) {
     console.log(`requesting ${url}`);
-    https.get(url, (res) => {
+    var req = https.get(url, (res) => {
         var resStr = '';
         res.on('data', (data) => {
             resStr += data;
@@ -102,7 +103,21 @@ function getSongLyrics(url, callback, done) {
             console.log(`done with ${url}`);
             done();
         });
+
+        res.on('error', (err) => {
+            done(err);
+            console.log(`ERROR while fetching ${url}: ${err}`);
+        });
     });
+
+    req.on('error', (err) => {
+        done(); // skip this url ????
+        // TODO: instead, we can note each url that is reset, then try them all again after
+        // everything else has finished
+        console.log(`ERROR: request threw an error while fetching ${url}: ${err}`);
+    });
+
+    req.end();
 }
 
 /**
@@ -141,6 +156,10 @@ function getSongURLs(id, artist, callback) {
                     getURLs(resJson['response']['next_page']);
                 else
                     callback(songURLs);
+            });
+
+            res.on('error', (err) => {
+                console.log(`ERROR: while retrieving page ${page} for artist ${artist}`);
             });
         });
     };
