@@ -14,6 +14,11 @@ fs.readFile('token.access', 'utf8', (err, data) => {
 // serve files in public/
 app.use(express.static('public'));
 
+app.get('/artist', (req, res) => {
+    console.log('request to /artist');
+    res.json({'artist': 'cruel hand'});
+});
+
 app.listen(8080, () => {
     console.log('listening on port 8080...');
 });

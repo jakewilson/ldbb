@@ -1,8 +1,20 @@
 <html>
     <head>
         <title>Lyrics</title>
+        <script type="text/javascript">
+            function sendReq() {
+                fetch('/artist')
+                    .then((res) => {
+                        return res.json();
+                    })
+                    .then((data) => {
+                        console.log(data);
+                    });
+            }
+        </script>
     </head>
     <body>
         <p>Hello world!</p>
+        <button onclick='sendReq()'>Button</button>
     </body>
 </html>
