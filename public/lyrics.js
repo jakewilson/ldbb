@@ -10,8 +10,8 @@ function getLyrics(artist) {
         return blob.json();
     })
     .then((res) => {
-        document.getElementById('results').innerHTML = 'done!';
         console.log(res);
+        document.getElementById('results').innerHTML = 'done!';
     })
     ;
 }
