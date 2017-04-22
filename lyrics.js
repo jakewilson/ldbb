@@ -1,4 +1,5 @@
 var https = require('https');
+var cheerio = require('cheerio');
 
 var ACCESS_TOKEN = '';
 
@@ -10,14 +11,43 @@ module.exports = {
      * @param callback: function to call once the lyrics have been retreived
      */
     get: function(artist, callback) {
+        artist = artist.toLowerCase().trim();
+        artist = artist.replace(/\s+/g, ' ');
+
         getArtistId(artist, (id) => {
             console.log(`ID: ${id}`);
             getSongURLs(id, (urls) => {
                 callback(urls);
+                getSongLyrics(urls[0]);
+//                urls.forEach((url) => {
+//
+//                });
             });
         });
     }
 };
+
+/**
+ * Given a song url, retrieves the page and scrapes the lyrics
+ *
+ * @param url: the url of the genius lyric page
+ */
+function getSongLyrics(url) {
+    console.log(`requesting ${url}`);
+    https.get(url, (res) => {
+        var resStr = '';
+        res.on('data', (data) => {
+            resStr += data;
+        });
+
+        res.on('end', () => {
+            var $ = cheerio.load(resStr);
+
+            var lyrics = $('.lyrics > p').text();
+            console.log(lyrics);
+        });
+    });
+}
 
 /**
  * Given an artist id, calls `callback` with an array of all song URLS for that artist
@@ -30,7 +60,7 @@ function getSongURLs(id, callback) {
     var getURLs = function(page) {
         page = page || 1;
 
-        callGenius(`/artists/${id}/songs?page=${page}`, (res) => {
+        callGenius(`/artists/${id}/songs?page=${page}&per_page=50`, (res) => {
             var resStr = '';
             res.on('data', (data) => {
                 resStr += data;
@@ -38,13 +68,13 @@ function getSongURLs(id, callback) {
 
             res.on('end', () => {
                 var resJson = JSON.parse(resStr);
-                console.log(`RESPONSE: ${JSON.stringify(resJson['response'])}`);
                 if (resJson['meta']['status'] !== 200)
                     return callback(null);
 
 
                 resJson['response']['songs'].forEach((song) => {
-                    songURLs.push(song.url);
+                    if (song.url.search(/.*lyrics.*/i) != -1)
+                        songURLs.push(song.url);
                 });
 
                 if (resJson['response']['next_page'])
@@ -64,9 +94,6 @@ function getSongURLs(id, callback) {
  * @param callback: function to call once the artist ID has been retrieved
  */
 function getArtistId(artist, callback) {
-    artist = artist.toLowerCase().trim();
-    artist = artist.replace(/\s+/g, ' ');
-
     var URIArtist = artist.replace(/\s+/g, '_'); /* the artist name to send in the request */
     var resStr = '';
 

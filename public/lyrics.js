@@ -4,6 +4,7 @@ function getLyrics(artist) {
     }
 
     document.getElementById('results').innerHTML = 'Loading...';
+    var start = new Date().getTime();
 
     fetch('/artist/' + artist)
     .then((blob) => {
@@ -12,6 +13,7 @@ function getLyrics(artist) {
     .then((res) => {
         console.log(res);
         document.getElementById('results').innerHTML = 'done!';
+        console.log(`Total Time: ${new Date().getTime() - start} ms`);
     })
     ;
 }
