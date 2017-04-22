@@ -1,6 +1,13 @@
 var https = require('https');
 
 module.exports = {
+    /**
+     * Calls `callback` with all lyrics for an artist
+     *
+     * @param artist: the artist to search for
+     * @param token: the genius API access token
+     * @param callback: function to call once the lyrics have been retreived
+     */
     get: function(artist, token, callback) {
         getArtistId(artist, token, (id) => {
             console.log(`${artist} id: ${id}`);
@@ -10,6 +17,10 @@ module.exports = {
 
 /**
  * Given an artist, calls `callback` with the genius ID for that artist
+ *
+ * @param artist: the artist to search for
+ * @param token: the genius API access token
+ * @param callback: function to call once the artist ID has been retrieved
  */
 function getArtistId(artist, token, callback) {
     artist = artist.toLowerCase().trim();
@@ -40,7 +51,7 @@ function getArtistId(artist, token, callback) {
                 }
             });
 
-            if (!found)
+            if (!found) // TODO get more songs?
                 return callback(-1);
         });
     }).end();
