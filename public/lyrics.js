@@ -1,6 +1,11 @@
 function getLyrics(artist) {
+    if (!artist || artist === '') {
+        return;
+    }
+
     document.getElementById('results').innerHTML = 'Loading...';
-    fetch('/artist')
+
+    fetch('/artist/' + artist)
     .then((blob) => {
         return blob.json();
     })
