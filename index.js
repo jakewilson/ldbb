@@ -11,9 +11,8 @@ fs.readFile('token.access', 'utf8', (err, data) => {
     accessToken = data;
 });
 
-app.get('/', (req, res) => {
-    res.send('Hello world!');
-});
+// serve files in public/
+app.use(express.static('public'));
 
 app.listen(8080, () => {
     console.log('listening on port 8080...');
