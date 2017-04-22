@@ -1,9 +1,10 @@
 var https = require('https');
 var cheerio = require('cheerio');
+var async = require('async');
 
 var ACCESS_TOKEN = '';
 
-var frequency_table = [];
+var frequency_table = {};
 
 module.exports = {
     /**
@@ -19,11 +20,15 @@ module.exports = {
         getArtistId(artist, (id) => {
             console.log(`ID: ${id}`);
             getSongURLs(id, artist, (urls) => {
-                callback(urls);
-                urls.forEach((url) => {
-                    getSongLyrics(url, analyzeLyrics);
+                async.each(urls, (url, callback) => {
+                    getSongLyrics(url, analyzeLyrics, callback);
+                }, (err) => {
+                    if (!err) {
+                        callback(frequency_table);
+                    } else {
+                        console.log(`ERROR: ${err}`);
+                    }
                 });
-                console.log('\n\n\n\n\n-------------------- DONE -------------------------\n\n\n\n\n');
             });
         });
     }
@@ -37,7 +42,7 @@ function analyzeLyrics(lyrics) {
     var words = lyrics.split(/\s+/);
 
     words.forEach((word) => {
-        //console.log(word);
+        word = word.toLowerCase();
         if (word in frequency_table)
             frequency_table[word]++;
         else
@@ -63,8 +68,9 @@ function processLyrics(lyrics) {
  *
  * @param url: the url of the genius lyric page
  * @param callback: the function to call once the lyrics have been received
+ * @param done: the function to call once the first callback has returned
  */
-function getSongLyrics(url, callback) {
+function getSongLyrics(url, callback, done) {
     console.log(`requesting ${url}`);
     https.get(url, (res) => {
         var resStr = '';
@@ -78,6 +84,8 @@ function getSongLyrics(url, callback) {
 
             var lyrics = processLyrics($('.lyrics > p').text());
             callback(lyrics);
+            console.log(`done with ${url}`);
+            done();
         });
     });
 }
@@ -108,7 +116,6 @@ function getSongURLs(id, artist, callback) {
                     return callback(null);
 
 
-                console.log(artist);
                 var artistRegex = new RegExp(artist, 'i');
                 resJson['response']['songs'].forEach((song) => {
                     if (/.*lyrics.*/i.test(song.url) && artistRegex.test(song.url))

@@ -10,7 +10,8 @@ app.get('/artist/*', (req, res) => {
     let artist = req.params[0];
 
     lyrics.get(artist, (data) => {
-        res.send(data);
+        console.log(data);
+        res.json(data);
     });
 });
 

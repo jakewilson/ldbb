@@ -8,6 +8,7 @@ function getLyrics(artist) {
 
     fetch('/artist/' + artist)
     .then((blob) => {
+        console.log(blob);
         return blob.json();
     })
     .then((res) => {
