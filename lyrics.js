@@ -37,30 +37,32 @@ function getSongURLs(id, callback) {
  */
 function getArtistId(artist, callback) {
     artist = artist.toLowerCase().trim();
+    artist = artist.replace(/\s+/g, ' ');
+
+    var URIArtist = artist.replace(/\s+/g, '_'); /* the artist name to send in the request */
     var resStr = '';
-    callGenius('/search?q=' + artist, (res) => {
+
+    callGenius('/search?q=' + URIArtist, (res) => {
         res.on('data', (data) => {
             resStr += data;
         });
+
         res.on('end', () => {
             var resJson = JSON.parse(resStr);
-            console.log(`STATUS: ${resJson.meta.status}`);
+
             if (resJson.meta.status !== 200)
                 return callback(-1);
 
             var hits = resJson.response.hits;
-            var found = false;
 
-            hits.forEach((hit) => {
-                var resArtist = hit['result']['primary_artist'];
+            for (var i = 0; i < hits.length; i++) {
+                var resArtist = hits[i]['result']['primary_artist'];
                 if (resArtist['name'].toLowerCase() === artist) {
-                    found = true;
                     return callback(resArtist['id']);
                 }
-            });
+            }
 
-            if (!found) // TODO get more songs?
-                return callback(-1);
+            return callback(-1);
         });
     });
 }
