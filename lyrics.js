@@ -12,9 +12,9 @@ module.exports = {
     get: function(artist, callback) {
         getArtistId(artist, (id) => {
             console.log(`ID: ${id}`);
-//            getSongURLS(id, (urls) => {
-//                console.log(`URLS: ${urls}`);
-//            });
+            getSongURLs(id, (urls) => {
+                callback(urls);
+            });
         });
     }
 };
@@ -26,7 +26,35 @@ module.exports = {
  * @param callback: function to call once the song URLS have been retrieved
  */
 function getSongURLs(id, callback) {
-    console.log(`id: ${id}`);
+    var songURLs = [];
+    var getURLs = function(page) {
+        page = page || 1;
+
+        callGenius(`/artists/${id}/songs?page=${page}`, (res) => {
+            var resStr = '';
+            res.on('data', (data) => {
+                resStr += data;
+            });
+
+            res.on('end', () => {
+                var resJson = JSON.parse(resStr);
+                console.log(`RESPONSE: ${JSON.stringify(resJson['response'])}`);
+                if (resJson['meta']['status'] !== 200)
+                    return callback(null);
+
+
+                resJson['response']['songs'].forEach((song) => {
+                    songURLs.push(song.url);
+                });
+
+                if (resJson['response']['next_page'])
+                    getURLs(resJson['response']['next_page']);
+                else
+                    callback(songURLs);
+            });
+        });
+    };
+    getURLs();
 }
 
 /**
@@ -74,6 +102,7 @@ function getArtistId(artist, callback) {
  * @param callback: the function to call on response
  */
 function callGenius(path, callback) {
+    console.log(`PATH: ${path}`);
     var options = {
         host: 'api.genius.com',
         path: path,
