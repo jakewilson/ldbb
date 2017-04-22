@@ -3,6 +3,8 @@ var cheerio = require('cheerio');
 
 var ACCESS_TOKEN = '';
 
+var frequency_table = [];
+
 module.exports = {
     /**
      * Calls `callback` with all lyrics for an artist
@@ -16,16 +18,32 @@ module.exports = {
 
         getArtistId(artist, (id) => {
             console.log(`ID: ${id}`);
-            getSongURLs(id, (urls) => {
+            getSongURLs(id, artist, (urls) => {
                 callback(urls);
-                getSongLyrics(urls[0]);
-//                urls.forEach((url) => {
-//
-//                });
+                urls.forEach((url) => {
+                    getSongLyrics(url, analyzeLyrics);
+                });
+                console.log('\n\n\n\n\n-------------------- DONE -------------------------\n\n\n\n\n');
             });
         });
     }
 };
+
+/**
+ * Iterates through every word in the song,
+ * adds each word to a frequency table
+ */
+function analyzeLyrics(lyrics) {
+    var words = lyrics.split(/\s+/);
+
+    words.forEach((word) => {
+        //console.log(word);
+        if (word in frequency_table)
+            frequency_table[word]++;
+        else
+            frequency_table[word] = 1;
+    });
+}
 
 /**
  * Processes the lyrics. Removes anything between [ ],
@@ -44,8 +62,9 @@ function processLyrics(lyrics) {
  * Given a song url, retrieves the page and scrapes the lyrics
  *
  * @param url: the url of the genius lyric page
+ * @param callback: the function to call once the lyrics have been received
  */
-function getSongLyrics(url) {
+function getSongLyrics(url, callback) {
     console.log(`requesting ${url}`);
     https.get(url, (res) => {
         var resStr = '';
@@ -54,10 +73,11 @@ function getSongLyrics(url) {
         });
 
         res.on('end', () => {
+            console.log(`got lyrics for ${url}`);
             var $ = cheerio.load(resStr);
 
             var lyrics = processLyrics($('.lyrics > p').text());
-            console.log(lyrics);
+            callback(lyrics);
         });
     });
 }
@@ -66,10 +86,13 @@ function getSongLyrics(url) {
  * Given an artist id, calls `callback` with an array of all song URLS for that artist
  *
  * @param id: the artist id to search for
+ * @param artist: the artist of the songs
  * @param callback: function to call once the song URLS have been retrieved
  */
-function getSongURLs(id, callback) {
+function getSongURLs(id, artist, callback) {
     var songURLs = [];
+    artist = artist.replace(/\s+/g, '-');
+    console.log(artist);
     var getURLs = function(page) {
         page = page || 1;
 
@@ -85,8 +108,10 @@ function getSongURLs(id, callback) {
                     return callback(null);
 
 
+                console.log(artist);
+                var artistRegex = new RegExp(artist, 'i');
                 resJson['response']['songs'].forEach((song) => {
-                    if (song.url.search(/.*lyrics.*/i) != -1)
+                    if (/.*lyrics.*/i.test(song.url) && artistRegex.test(song.url))
                         songURLs.push(song.url);
                 });
 
