@@ -28,6 +28,19 @@ module.exports = {
 };
 
 /**
+ * Processes the lyrics. Removes anything between [ ],
+ * removes all non-letter characters
+ *
+ * @param lyrics: a string of lyrics to process
+ * @return: the newly processed lyrics
+ */
+function processLyrics(lyrics) {
+    lyrics = lyrics.replace(/\[([^\]]+)]/g, ''); // remove anything between [ ]
+    lyrics = lyrics.replace(/[^A-Za-z\s\d]/g, ''); // remove any non letter or whitespace
+    return lyrics;
+}
+
+/**
  * Given a song url, retrieves the page and scrapes the lyrics
  *
  * @param url: the url of the genius lyric page
@@ -43,7 +56,7 @@ function getSongLyrics(url) {
         res.on('end', () => {
             var $ = cheerio.load(resStr);
 
-            var lyrics = $('.lyrics > p').text();
+            var lyrics = processLyrics($('.lyrics > p').text());
             console.log(lyrics);
         });
     });
